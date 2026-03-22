@@ -1,0 +1,78 @@
+{
+  "name": "buntron",
+  "version": "1.0.0",
+  "description": "Build native Windows desktop apps with Bun + WebView2. Fast, lightweight Electron alternative.",
+  "author": "Tarkan Antoan Başar",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "bin": {
+    "buntron": "./bin/buntron.ts"
+  },
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./renderer": {
+      "types": "./src/renderer/buntron-preload.ts"
+    }
+  },
+  "files": [
+    "src",
+    "bin",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "postinstall": "bun run scripts/setup.ts",
+    "setup": "bun run scripts/setup.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "bun-types": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "bun-types": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "os": [
+    "win32"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tarkantoan/buntron.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tarkantoan/buntron/issues"
+  },
+  "homepage": "https://github.com/tarkantoan/buntron#readme",
+  "keywords": [
+    "bun",
+    "electron",
+    "electron-alternative",
+    "desktop",
+    "desktop-app",
+    "webview2",
+    "webview",
+    "win32",
+    "windows",
+    "framework",
+    "gui",
+    "native",
+    "chromium",
+    "edge"
+  ]
+}

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+bun.lock
+
+# Build artifacts
+dist/
+release/
+native/build/
+native/webview2-sdk/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temp
+.tmp-test/
+*.log
+
+# Environment
+.env
+.env.local

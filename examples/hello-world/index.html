@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buntron - Hello World</title>
+  <style>
+    :root {
+      --bg-primary: #0f0f13;
+      --bg-secondary: #1a1a24;
+      --bg-tertiary: #24243a;
+      --accent: #7c5cfc;
+      --accent-light: #9b82fc;
+      --accent-glow: rgba(124, 92, 252, 0.25);
+      --text-primary: #e8e6f0;
+      --text-secondary: #9896a8;
+      --text-muted: #6b6980;
+      --border: #2a2a3e;
+      --success: #4ceb92;
+      --warning: #ffa63e;
+      --danger: #fc5c65;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* Title bar area */
+    .titlebar {
+      height: 32px;
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      -webkit-app-region: drag;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .titlebar-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .titlebar-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 10px;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* Main content */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 32px;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .hero-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 24px var(--accent-glow));
+    }
+    .hero h1 {
+      font-size: 36px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-light), var(--accent), #5c4cd6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .hero p {
+      color: var(--text-secondary);
+      font-size: 16px;
+    }
+    .hero .version-badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 4px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--accent-light);
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    /* Cards grid */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+    .card-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    .card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .card p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Console */
+    .console-wrapper {
+      margin-bottom: 32px;
+    }
+    .console-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .console-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .console-clear {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .console-clear:hover {
+      border-color: var(--accent);
+      color: var(--accent-light);
+    }
+    .console {
+      background: #0a0a10;
+      border: 1px solid var(--border);
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 16px;
+      min-height: 160px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .console-line {
+      display: flex;
+      gap: 8px;
+    }
+    .console-line .prefix {
+      color: var(--accent);
+      user-select: none;
+    }
+    .console-line .message { color: var(--text-primary); }
+    .console-line.success .message { color: var(--success); }
+    .console-line.warning .message { color: var(--warning); }
+    .console-line.error .message { color: var(--danger); }
+    .console-line .timestamp {
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    /* Buttons */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn:hover {
+      border-color: var(--accent);
+      background: var(--bg-tertiary);
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--accent-light);
+      border-color: var(--accent-light);
+    }
+
+    /* System info panel */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .info-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+    }
+    .info-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .info-value {
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      color: var(--accent-light);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: 24px;
+    }
+    .footer a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+    .animate-in:nth-child(1) { animation-delay: 0.05s; }
+    .animate-in:nth-child(2) { animation-delay: 0.1s; }
+    .animate-in:nth-child(3) { animation-delay: 0.15s; }
+    .animate-in:nth-child(4) { animation-delay: 0.2s; }
+    .animate-in:nth-child(5) { animation-delay: 0.25s; }
+    .animate-in:nth-child(6) { animation-delay: 0.3s; }
+  </style>
+</head>
+<body>
+  <div class="titlebar">
+    <div class="titlebar-dot"></div>
+    <span class="titlebar-text">Buntron — Hello World</span>
+  </div>
+
+  <div class="container">
+    <div class="hero animate-in">
+      <div class="hero-icon">⚡</div>
+      <h1>Buntron</h1>
+      <p>Blazing-fast desktop apps powered by Bun + WebView2</p>
+      <span class="version-badge" id="versionBadge">Loading...</span>
+    </div>
+
+    <div class="cards">
+      <div class="card animate-in" onclick="doPing()">
+        <div class="card-icon">🏓</div>
+        <h3>IPC Ping</h3>
+        <p>Send a ping message to the main process and get a pong back via IPC.</p>
+      </div>
+      <div class="card animate-in" onclick="getSystemInfo()">
+        <div class="card-icon">💻</div>
+        <h3>System Info</h3>
+        <p>Fetch runtime system info from the Bun main process.</p>
+      </div>
+      <div class="card animate-in" onclick="showDialog()">
+        <div class="card-icon">💬</div>
+        <h3>Native Dialog</h3>
+        <p>Open a native Win32 message box dialog.</p>
+      </div>
+      <div class="card animate-in" onclick="openFileDialog()">
+        <div class="card-icon">📂</div>
+        <h3>Open File</h3>
+        <p>Show a native file open dialog and display the selected path.</p>
+      </div>
+      <div class="card animate-in" onclick="sendNotification()">
+        <div class="card-icon">🔔</div>
+        <h3>Notification</h3>
+        <p>Show a Windows toast notification from the renderer.</p>
+      </div>
+      <div class="card animate-in" onclick="openGitHub()">
+        <div class="card-icon">🌐</div>
+        <h3>Open URL</h3>
+        <p>Open an external URL in the default browser.</p>
+      </div>
+    </div>
+
+    <div class="info-grid" id="infoGrid" style="display: none;"></div>
+
+    <div class="actions animate-in">
+      <button class="btn btn-primary" onclick="doPing()">🏓 Ping Main Process</button>
+      <button class="btn" onclick="getSystemInfo()">💻 Get System Info</button>
+      <button class="btn" onclick="showDialog()">💬 Show Dialog</button>
+      <button class="btn" onclick="sendNotification()">🔔 Notify</button>
+    </div>
+
+    <div class="console-wrapper animate-in">
+      <div class="console-header">
+        <span class="console-title">Console</span>
+        <button class="console-clear" onclick="clearConsole()">Clear</button>
+      </div>
+      <div class="console" id="console"></div>
+    </div>
+
+    <div class="footer">
+      Built with <a href="#">Buntron</a> — Electron-like framework powered by Bun
+    </div>
+  </div>
+
+  <script>
+    const consoleEl = document.getElementById("console");
+
+    function log(message, type = "") {
+      const line = document.createElement("div");
+      line.className = "console-line " + type;
+      const now = new Date();
+      const ts = now.toLocaleTimeString("en-GB", { hour12: false });
+      line.innerHTML = `
+        <span class="prefix">❯</span>
+        <span class="message">${escapeHtml(String(message))}</span>
+        <span class="timestamp">${ts}</span>
+      `;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function clearConsole() {
+      consoleEl.innerHTML = "";
+      log("Console cleared", "warning");
+    }
+
+    // Wait for buntron API
+    function waitForAPI() {
+      return new Promise((resolve) => {
+        if (window.buntron) return resolve(window.buntron);
+        let checks = 0;
+        const iv = setInterval(() => {
+          checks++;
+          if (window.buntron) {
+            clearInterval(iv);
+            resolve(window.buntron);
+          }
+          if (checks > 50) {
+            clearInterval(iv);
+            resolve(null);
+          }
+        }, 100);
+      });
+    }
+
+    async function doPing() {
+      log("Sending ping...");
+      try {
+        const result = await window.buntron.ipc.invoke("ping", "Hello from renderer!");
+        log(result, "success");
+      } catch (e) {
+        log("Ping failed: " + e.message, "error");
+      }
+    }
+
+    async function getSystemInfo() {
+      log("Fetching system info...");
+      try {
+        const info = await window.buntron.ipc.invoke("get-system-info");
+        log("System info received!", "success");
+        log(`  Bun: v${info.bunVersion}  |  Platform: ${info.platform}  |  Arch: ${info.arch}`);
+        log(`  PID: ${info.pid}  |  Uptime: ${Math.round(info.uptime)}s`);
+        log(`  Memory RSS: ${(info.memory.rss / 1024 / 1024).toFixed(1)} MB  |  Heap: ${(info.memory.heapUsed / 1024 / 1024).toFixed(1)} MB`);
+
+        // Update info grid
+        const grid = document.getElementById("infoGrid");
+        grid.style.display = "grid";
+        grid.innerHTML = `
+          <div class="info-item">
+            <div class="info-label">Bun Version</div>
+            <div class="info-value">v${info.bunVersion}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Platform</div>
+            <div class="info-value">${info.platform}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Architecture</div>
+            <div class="info-value">${info.arch}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Process ID</div>
+            <div class="info-value">${info.pid}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Uptime</div>
+            <div class="info-value">${Math.round(info.uptime)}s</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Memory RSS</div>
+            <div class="info-value">${(info.memory.rss / 1024 / 1024).toFixed(1)} MB</div>
+          </div>
+        `;
+      } catch (e) {
+        log("Failed: " + e.message, "error");
+      }
+    }
+
+    async function showDialog() {
+      log("Opening native dialog...");
+      try {
+        const result = await window.buntron.ipc.invoke("show-dialog");
+        log("Dialog result: button index " + result, "success");
+      } catch (e) {
+        log("Dialog failed: " + e.message, "error");
+      }
+    }
+
+    async function openFileDialog() {
+      log("Opening file dialog...");
+      try {
+        const result = await window.buntron.ipc.invoke("open-file");
+        if (result && result.length > 0) {
+          log("Selected: " + result.join(", "), "success");
+        } else {
+          log("No file selected", "warning");
+        }
+      } catch (e) {
+        log("File dialog failed: " + e.message, "error");
+      }
+    }
+
+    async function sendNotification() {
+      log("Sending notification...");
+      try {
+        await window.buntron.ipc.invoke("show-notification", "Hello! 👋", "This notification came from Buntron renderer process.");
+        log("Notification sent!", "success");
+      } catch (e) {
+        log("Notification failed: " + e.message, "error");
+      }
+    }
+
+    async function openGitHub() {
+      log("Opening URL in browser...");
+      try {
+        await window.buntron.ipc.invoke("open-url", "https://bun.sh");
+        log("Opened bun.sh in default browser", "success");
+      } catch (e) {
+        log("Failed: " + e.message, "error");
+      }
+    }
+
+    // Init
+    (async () => {
+      const api = await waitForAPI();
+      if (api) {
+        log("Buntron API connected!", "success");
+        document.getElementById("versionBadge").textContent = "buntron v1.0.0";
+
+        // Listen for events from main process
+        api.ipc.on("main-event", (data) => {
+          log("Event from main: " + JSON.stringify(data), "warning");
+        });
+      } else {
+        log("Buntron API not available (running in browser?)", "warning");
+        document.getElementById("versionBadge").textContent = "standalone mode";
+      }
+    })();
+  </script>
+</body>
+</html>

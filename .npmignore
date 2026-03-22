@@ -1,0 +1,18 @@
+# Test & dev only
+test/
+examples/
+release/
+.tmp-test/
+scripts/build-exe.ts
+
+# Build artifacts (rebuilt on install via postinstall)
+native/
+dist/
+
+# Config
+.gitignore
+.github/
+tsconfig.json
+bunfig.toml
+bun.lock
+*.log

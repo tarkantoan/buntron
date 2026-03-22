@@ -1,0 +1,793 @@
+<div align="center">
+
+# ⚡ Buntron
+
+**Build native Windows desktop apps with Bun + WebView2**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D4.svg)](#requirements)
+[![Runtime: Bun](https://img.shields.io/badge/Runtime-Bun-f472b6.svg)](https://bun.sh)
+[![WebView2](https://img.shields.io/badge/Renderer-WebView2-00C853.svg)](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+
+An Electron-like desktop framework for Windows, powered by [Bun](https://bun.sh) instead of Node.js.
+Build native apps using HTML, CSS, and TypeScript — with blazing-fast startup, tiny footprint,
+and a familiar Electron-style API.
+
+</div>
+
+---
+
+## Why Buntron?
+
+| Feature         | Buntron         | Electron              |
+| --------------- | --------------- | --------------------- |
+| **Runtime**     | Bun             | Node.js               |
+| **Renderer**    | WebView2 (Edge) | Chromium (bundled)     |
+| **Bundle size** | ~5-15 MB        | ~150-200+ MB           |
+| **Startup**     | ~200ms          | ~1-3s                  |
+| **Memory**      | ~30-50 MB       | ~100-300+ MB           |
+| **Platform**    | Windows         | Windows, macOS, Linux  |
+
+- **No bundled Chromium** — uses the system WebView2 (pre-installed on Windows 10/11)
+- **Bun runtime** — starts in milliseconds, native TypeScript support
+- **Familiar API** — same patterns as Electron (`BrowserWindow`, `ipcMain`, `dialog`, etc.)
+- **Tiny footprint** — 10-30x smaller than Electron apps
+
+---
+
+## Features
+
+- 🚀 **Bun-powered** — 3-5x faster startup than Node.js
+- 🌐 **WebView2 rendering** — Edge Chromium engine, always up-to-date
+- 🪟 **Native Win32 FFI** — Direct bindings to user32, kernel32, shell32, gdi32
+- 📡 **IPC system** — WebSocket-based main↔renderer communication
+- 🔥 **HMR** — Hot Module Reload during development
+- 📦 **CLI tooling** — Scaffolding, dev server, build & package commands
+- 🎨 **Rich API** — Dialogs, tray icons, menus, notifications, clipboard, global shortcuts
+- 🏗️ **Zero npm dependencies** — Only needs Bun, .NET Framework (built-in), and WebView2 Runtime
+
+---
+
+## Requirements
+
+| Requirement          | Details                                                |
+| -------------------- | ------------------------------------------------------ |
+| **OS**               | Windows 10/11                                          |
+| **Bun**              | v1.0+ ([install](https://bun.sh))                      |
+| **.NET Framework**   | 4.x (pre-installed on all modern Windows)              |
+| **WebView2 Runtime** | Included with Windows 10 (1803+) and Windows 11        |
+
+---
+
+## Quick Start
+
+```bash
+# Install Buntron in your project
+bun add buntron
+
+# Create a new app from template
+bunx buntron init my-app
+cd my-app
+bun install
+
+# Start development with HMR
+bun run dev
+
+# Build for production
+bun run build
+
+# Package for distribution
+bun run package
+```
+
+---
+
+## Architecture
+
+Buntron uses a three-process architecture:
+
+```
+┌──────────────────────────────────────────────────┐
+│                   Bun (Main Process)             │
+│                                                  │
+│  • App lifecycle        • IPC handlers           │
+│  • Native FFI calls     • File system access     │
+│  • WebSocket IPC server • Content HTTP server    │
+│                                                  │
+│        ┌──── stdin/stdout JSON ────┐             │
+│        ▼                           ▼             │
+│  ┌─────────────┐          ┌──────────────┐       │
+│  │  C# Host    │          │  C# Host     │       │
+│  │  (Window 1) │          │  (Window N)  │       │
+│  │  WebView2   │          │  WebView2    │       │
+│  └──────┬──────┘          └──────┬───────┘       │
+│         │    WebSocket IPC       │               │
+│         ▼                        ▼               │
+│  ┌─────────────┐          ┌──────────────┐       │
+│  │  Renderer 1 │          │  Renderer N  │       │
+│  │  HTML/CSS/JS│          │  HTML/CSS/JS │       │
+│  └─────────────┘          └──────────────┘       │
+└──────────────────────────────────────────────────┘
+```
+
+1. **Main Process (Bun)** — Your TypeScript/JavaScript code runs here. Manages windows, handles IPC, accesses native APIs.
+2. **Host Process (C#)** — Manages native windows with WebView2 controls. Communicates with Bun via JSON over stdin/stdout.
+3. **Renderer Process (WebView2)** — Your HTML/CSS/JS UI. Communicates with main via WebSocket IPC.
+
+---
+
+## API Reference
+
+### `BuntronApp`
+
+The main application class. Controls lifecycle and global state.
+
+```ts
+import { BuntronApp } from "buntron";
+
+const app = new BuntronApp();
+
+await app.start(); // Initialize the framework
+await app.whenReady(); // Wait until host process is ready
+
+app.on("ready", () => {});
+app.on("window-all-closed", () => app.quit());
+
+app.requestSingleInstanceLock(); // Prevent multiple instances
+app.getPath("documents"); // Get special folder paths
+app.quit(); // Graceful shutdown
+```
+
+**Events:** `ready`, `window-all-closed`, `before-quit`, `will-quit`, `quit`, `second-instance`
+
+**Methods:**
+| Method | Description |
+|---|---|
+| `start()` | Start the app (compiles host if needed, starts servers) |
+| `whenReady()` | Returns a promise that resolves when the app is ready |
+| `quit()` | Quit the application |
+| `requestSingleInstanceLock()` | Request single-instance mutex lock |
+| `getPath(name)` | Get path to special directory (`documents`, `desktop`, `appData`, `temp`, etc.) |
+| `getWindowCount()` | Get number of open windows |
+
+---
+
+### `BrowserWindow`
+
+Create and control native windows.
+
+```ts
+import { BrowserWindow } from "buntron";
+
+const win = new BrowserWindow({
+  width: 1024,
+  height: 768,
+  title: "My App",
+  center: true,
+  frame: true,
+  resizable: true,
+  backgroundColor: "#1a1a2e",
+  minWidth: 400,
+  minHeight: 300,
+  webPreferences: {
+    devTools: true,
+  },
+});
+
+// Load content
+await win.loadFile("./renderer/index.html");
+// or
+await win.loadURL("https://example.com");
+
+// Window manipulation
+win.show();
+win.hide();
+win.minimize();
+win.maximize();
+win.restore();
+win.focus();
+win.close();
+
+// Properties
+win.setTitle("New Title");
+win.setSize(800, 600);
+win.setPosition(100, 100);
+win.setFullScreen(true);
+win.setAlwaysOnTop(true);
+win.setOpacity(0.9);
+win.flashFrame(true);
+
+// Events
+win.on("closed", () => console.log("Window closed"));
+win.on("focus", () => console.log("Window focused"));
+win.on("blur", () => console.log("Window blurred"));
+win.on("maximize", () => console.log("Maximized"));
+win.on("minimize", () => console.log("Minimized"));
+win.on("resize", (w, h) => console.log(`Resized: ${w}x${h}`));
+win.on("move", (x, y) => console.log(`Moved: ${x},${y}`));
+
+// Static methods
+BrowserWindow.getAllWindows();
+BrowserWindow.getFocusedWindow();
+BrowserWindow.fromId(1);
+```
+
+**Constructor Options:**
+
+| Option                    | Type    | Default   | Description                  |
+| ------------------------- | ------- | --------- | ---------------------------- |
+| `width`                   | number  | 800       | Window width in pixels       |
+| `height`                  | number  | 600       | Window height in pixels      |
+| `x`                       | number  | -         | X position                   |
+| `y`                       | number  | -         | Y position                   |
+| `title`                   | string  | "Buntron" | Window title                 |
+| `show`                    | boolean | true      | Show window on creation      |
+| `center`                  | boolean | false     | Center on screen             |
+| `frame`                   | boolean | true      | Show window frame            |
+| `resizable`               | boolean | true      | Allow resizing               |
+| `minimizable`             | boolean | true      | Allow minimizing             |
+| `maximizable`             | boolean | true      | Allow maximizing             |
+| `fullscreen`              | boolean | false     | Start in fullscreen          |
+| `alwaysOnTop`             | boolean | false     | Keep on top of other windows |
+| `backgroundColor`         | string  | "#FFFFFF" | Background color (hex)       |
+| `opacity`                 | number  | 1.0       | Window opacity (0-1)         |
+| `minWidth`                | number  | 0         | Minimum width                |
+| `minHeight`               | number  | 0         | Minimum height               |
+| `maxWidth`                | number  | 0         | Maximum width (0=unlimited)  |
+| `maxHeight`               | number  | 0         | Maximum height (0=unlimited) |
+| `webPreferences.devTools` | boolean | false     | Enable DevTools              |
+
+---
+
+### `ipcMain`
+
+Handle IPC messages from renderer processes (main process side).
+
+```ts
+import { ipcMain } from "buntron";
+
+// Handle invoke calls (returns response)
+ipcMain.handle("get-data", async (event, ...args) => {
+  return { items: [1, 2, 3] };
+});
+
+// Handle one-time invoke
+ipcMain.handleOnce("init", async (event) => {
+  return { ready: true };
+});
+
+// Listen for messages (no response)
+ipcMain.on("log", (event, message) => {
+  console.log("Renderer says:", message);
+});
+
+// Send to specific window
+ipcMain.sendTo(windowId, "update", data);
+
+// Send to all windows
+ipcMain.sendToAll("broadcast", data);
+
+// Remove handler
+ipcMain.removeHandler("get-data");
+```
+
+---
+
+### Renderer API (`window.buntron`)
+
+The preload script exposes `window.buntron` in the renderer:
+
+```js
+// Invoke a handler in main process (returns promise)
+const result = await window.buntron.ipc.invoke("channel-name", arg1, arg2);
+
+// Send a message (fire-and-forget)
+window.buntron.ipc.send("channel-name", data);
+
+// Listen for messages from main
+window.buntron.ipc.on("event-name", (data) => {
+  console.log("Got event:", data);
+});
+
+// Listen once
+window.buntron.ipc.once("init", (config) => {
+  console.log("Config:", config);
+});
+
+// Remove listener
+window.buntron.ipc.removeListener("event-name", handler);
+window.buntron.ipc.removeAllListeners("event-name");
+```
+
+---
+
+### `dialog`
+
+Show native dialogs.
+
+```ts
+import { dialog } from "buntron";
+
+// Message box
+const buttonIndex = await dialog.showMessageBox({
+  title: "Confirm",
+  message: "Are you sure?",
+  detail: "This action cannot be undone.",
+  type: "warning", // "info" | "warning" | "error" | "question"
+  buttons: ["Yes", "No"],
+});
+
+// Error box
+dialog.showErrorBox("Error", "Something went wrong!");
+
+// Open file dialog
+const files = await dialog.showOpenDialog({
+  title: "Select files",
+  defaultPath: "C:\\Users",
+  multiSelections: true,
+  filters: [
+    { name: "Images", extensions: ["png", "jpg", "gif"] },
+    { name: "All Files", extensions: ["*"] },
+  ],
+});
+
+// Save file dialog
+const savePath = await dialog.showSaveDialog({
+  title: "Save as",
+  defaultPath: "document.txt",
+  filters: [{ name: "Text", extensions: ["txt"] }],
+});
+```
+
+---
+
+### `Tray`
+
+Create system tray icons.
+
+```ts
+import { Tray } from "buntron";
+
+const tray = new Tray("path/to/icon.ico", "Tooltip text");
+
+tray.setContextMenu([
+  { id: "open", label: "Open App" },
+  { type: "separator" },
+  { id: "quit", label: "Quit" },
+]);
+
+tray.on("click", () => console.log("Tray clicked"));
+tray.on("double-click", () => mainWindow.show());
+tray.on("menu-click", (menuId) => {
+  if (menuId === "quit") app.quit();
+});
+
+tray.setToolTip("Updated tooltip");
+tray.displayBalloon("Title", "Balloon message");
+tray.destroy();
+```
+
+---
+
+### `Menu` & `MenuItem`
+
+Build application menus.
+
+```ts
+import { Menu, MenuItem } from "buntron";
+
+const menu = Menu.buildFromTemplate([
+  {
+    label: "File",
+    submenu: [
+      { label: "New", accelerator: "Ctrl+N", click: () => createWindow() },
+      { label: "Open", accelerator: "Ctrl+O", click: () => openFile() },
+      { type: "separator" },
+      { label: "Exit", accelerator: "Alt+F4", click: () => app.quit() },
+    ],
+  },
+  {
+    label: "Help",
+    submenu: [{ label: "About", click: () => showAbout() }],
+  },
+]);
+
+// Programmatic menu building
+const menu = new Menu();
+menu.append(new MenuItem({ label: "Item 1", click: () => {} }));
+menu.append(new MenuItem({ type: "separator" }));
+menu.append(new MenuItem({ label: "Item 2", type: "checkbox", checked: true }));
+```
+
+---
+
+### `Notification`
+
+Show Windows toast notifications.
+
+```ts
+import { Notification } from "buntron";
+
+const notif = new Notification({
+  title: "Hello!",
+  body: "This is a notification from Buntron.",
+  silent: false,
+});
+
+notif.show();
+notif.on("click", () => mainWindow.focus());
+notif.on("close", () => console.log("Notification closed"));
+```
+
+---
+
+### `shell`
+
+Open external resources.
+
+```ts
+import { shell } from "buntron";
+
+await shell.openExternal("https://bun.sh");
+await shell.openPath("C:\\Users\\Documents");
+shell.showItemInFolder("C:\\Users\\file.txt");
+shell.beep();
+await shell.trashItem("C:\\Users\\old-file.txt");
+```
+
+---
+
+### `clipboard`
+
+Read/write system clipboard.
+
+```ts
+import { clipboard } from "buntron";
+
+clipboard.writeText("Hello from Buntron!");
+const text = clipboard.readText();
+clipboard.clear();
+```
+
+---
+
+### `screen`
+
+Get display information.
+
+```ts
+import { screen } from "buntron";
+
+const display = screen.getPrimaryDisplay();
+// { width, height, scaleFactor }
+
+const size = screen.getScreenSize();
+// { width, height }
+
+const cursor = screen.getCursorScreenPoint();
+// { x, y }
+
+const dpi = screen.getDpiScale();
+```
+
+---
+
+### `globalShortcut`
+
+Register global keyboard shortcuts.
+
+```ts
+import { globalShortcut } from "buntron";
+
+// Electron-style accelerator strings
+globalShortcut.register("Ctrl+Shift+I", () => {
+  console.log("Shortcut triggered!");
+});
+
+globalShortcut.register("Alt+Space", () => {
+  toggleWindow();
+});
+
+const isRegistered = globalShortcut.isRegistered("Ctrl+Shift+I");
+
+globalShortcut.unregister("Ctrl+Shift+I");
+globalShortcut.unregisterAll();
+```
+
+---
+
+### `powerMonitor`
+
+Monitor system power state.
+
+```ts
+import { powerMonitor } from "buntron";
+
+powerMonitor.start();
+
+powerMonitor.on("on-ac", () => console.log("Plugged in"));
+powerMonitor.on("on-battery", () => console.log("On battery"));
+powerMonitor.on("low-battery", () => console.log("Battery low!"));
+
+const state = powerMonitor.getSystemPowerState();
+// { acPower, batteryLife, batteryPercent, charging }
+
+powerMonitor.stop();
+```
+
+---
+
+## CLI Commands
+
+```
+buntron init <name>     Create a new Buntron project
+buntron dev             Start development with HMR
+buntron build           Build for production
+buntron package         Package into distributable folder
+buntron setup           Run setup / install WebView2 SDK
+buntron help            Show help
+buntron version         Show version
+```
+
+### `buntron init <name>`
+
+Scaffolds a new project with:
+
+```
+my-app/
+├── src/
+│   └── main.ts          # Main process entry
+├── renderer/
+│   ├── index.html        # UI entry point
+│   ├── styles.css        # Styles
+│   └── renderer.js       # Renderer script
+├── preload.ts            # Preload script
+├── package.json
+└── tsconfig.json
+```
+
+### `buntron dev`
+
+Starts the app in development mode:
+
+- Watches for file changes
+- Hot-reloads renderer files (HTML, CSS, JS) instantly
+- Auto-restarts main process on TypeScript changes
+- Opens DevTools if configured
+
+### `buntron build`
+
+Builds the app for production:
+
+- Bundles main process with Bun
+- Minifies and optimizes
+- Copies renderer files
+- Generates launcher script
+
+### `buntron package`
+
+Creates a distributable folder:
+
+- Includes Bun runtime
+- Bundles all app files
+- Copies WebView2 host and DLLs
+- Creates `.bat` and `.ps1` launchers
+- Ready to distribute as a ZIP or installer input
+
+---
+
+## Project Structure
+
+A typical Buntron project (generated by `bunx buntron init`):
+
+```
+my-app/
+├── src/
+│   ├── main.ts              # Main process (Bun)
+│   ├── preload.ts           # Preload script (optional)
+│   └── renderer/
+│       ├── index.html       # HTML entry
+│       ├── styles.css       # CSS
+│       └── renderer.js      # Client-side JS
+├── assets/                  # App resources (icons, images)
+├── package.json
+├── tsconfig.json
+└── .gitignore
+```
+
+### Main Process (`src/main.ts`)
+
+```ts
+import { BuntronApp, BrowserWindow, ipcMain } from "buntron";
+
+const app = new BuntronApp();
+
+app.on("ready", async () => {
+  const win = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    title: "My App",
+  });
+
+  await win.loadFile("./renderer/index.html");
+
+  ipcMain.handle("greet", async (_event, name) => {
+    return `Hello, ${name}!`;
+  });
+});
+
+app.on("window-all-closed", () => app.quit());
+
+await app.start();
+```
+
+### Renderer (`renderer/index.html`)
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My App</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <h1>Hello Buntron!</h1>
+    <button id="greetBtn">Greet</button>
+    <p id="result"></p>
+    <script>
+      document.getElementById("greetBtn").onclick = async () => {
+        const msg = await window.buntron.ipc.invoke("greet", "World");
+        document.getElementById("result").textContent = msg;
+      };
+    </script>
+  </body>
+</html>
+```
+
+---
+
+## Trade-offs
+
+- **Windows only** (for now) — WebView2 and Win32 FFI are Windows-specific
+- **WebView2 required** — Pre-installed on Windows 10/11, may need install on older systems
+- **Newer ecosystem** — Bun is newer than Node.js, but rapidly maturing
+
+---
+
+## Troubleshooting
+
+### WebView2 Runtime not found
+
+WebView2 Runtime is included with Windows 10 (version 1803+) and Windows 11. If it's missing:
+
+1. Download from [Microsoft WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+2. Install the Evergreen Runtime
+3. Run `bunx buntron setup` to verify
+
+### C# compiler (csc.exe) not found
+
+Buntron uses `csc.exe` from .NET Framework 4.x. It should be at:
+
+```
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe
+```
+
+or
+
+```
+C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe
+```
+
+If missing, install [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework) (usually pre-installed on Windows 10+).
+
+### Host compilation fails
+
+Run setup manually:
+
+```bash
+bunx buntron setup
+```
+
+This will:
+
+1. Check for csc.exe
+2. Download WebView2 SDK NuGet package
+3. Compile the host process
+4. Verify WebView2 Runtime
+
+### Port conflicts
+
+Buntron uses dynamic ports for the content server and WebSocket IPC. If you have conflicts, the framework will automatically find available ports.
+
+---
+
+## Development
+
+### Building from source
+
+```bash
+git clone https://github.com/tarkantoan/buntron.git
+cd buntron
+bun install          # Downloads WebView2 SDK & compiles host automatically
+```
+
+### Running the example
+
+```bash
+cd examples/hello-world
+bun run main.ts
+```
+
+### File structure
+
+```
+buntron/
+├── src/
+│   ├── native/          # Win32 FFI bindings
+│   │   ├── types.ts     # Constants, interfaces
+│   │   ├── ffi-helpers.ts
+│   │   ├── user32.ts
+│   │   ├── kernel32.ts
+│   │   ├── shell32.ts
+│   │   └── gdi32.ts
+│   ├── host/            # C# WebView2 host
+│   │   ├── webview-host.cs
+│   │   ├── compiler.ts
+│   │   └── process-manager.ts
+│   ├── ipc/             # IPC system
+│   │   ├── protocol.ts
+│   │   ├── ws-server.ts
+│   │   └── channels.ts
+│   ├── core/            # Framework classes
+│   │   ├── app.ts
+│   │   ├── browser-window.ts
+│   │   ├── ipc-main.ts
+│   │   ├── dialog.ts
+│   │   ├── tray.ts
+│   │   ├── menu.ts
+│   │   ├── notification.ts
+│   │   ├── shell.ts
+│   │   ├── clipboard.ts
+│   │   ├── screen.ts
+│   │   ├── global-shortcut.ts
+│   │   └── power-monitor.ts
+│   ├── server/
+│   │   └── content-server.ts
+│   ├── renderer/
+│   │   └── buntron-preload.ts
+│   ├── cli/
+│   │   ├── index.ts
+│   │   ├── init.ts
+│   │   ├── dev.ts
+│   │   ├── build.ts
+│   │   └── package-cmd.ts
+│   └── index.ts         # Main exports
+├── bin/
+│   └── buntron.ts       # CLI entry point
+├── scripts/
+│   └── setup.ts         # Install/setup script
+├── examples/
+│   └── hello-world/
+│       ├── main.ts
+│       └── index.html
+├── package.json
+├── tsconfig.json
+├── bunfig.toml
+└── README.md
+```
+
+---
+
+## License
+
+[MIT](LICENSE)
+
+---
+
+<div align="center">
+
+Built with ⚡ Bun + 🌐 WebView2 + 🪟 Win32
+
+[GitHub](https://github.com/tarkantoan/buntron) · [Issues](https://github.com/tarkantoan/buntron/issues) · [Bun](https://bun.sh)
+
+</div>
