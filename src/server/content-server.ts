@@ -98,13 +98,12 @@ export class ContentServer {
     const absPath = resolve(filePath);
     const fileName = require("path").basename(absPath);
 
-    // Serve the entire directory so relative paths (e.g. assets/) resolve correctly
+    // Serve the directory at root so both relative (./assets/) and
+    // root-relative (/assets/) paths from Vite builds resolve correctly
     const dir = dirname(absPath);
-    const dirRoute = `/d/${this.hashPath(dir)}`;
-    this.dirRoutes.set(dirRoute, dir);
+    this.dirRoutes.set("", dir);
 
-    // Return URL under the directory route so relative imports work
-    return `http://127.0.0.1:${this.port}${dirRoute}/${fileName}`;
+    return `http://127.0.0.1:${this.port}/${fileName}`;
   }
 
   /**
@@ -183,8 +182,9 @@ export class ContentServer {
       return this.serveStaticFile(filePath, headers);
     }
 
-    // Directory routes
-    for (const [prefix, dir] of this.dirRoutes) {
+    // Directory routes (sort by prefix length descending so more specific routes match first)
+    const sortedDirRoutes = [...this.dirRoutes.entries()].sort((a, b) => b[0].length - a[0].length);
+    for (const [prefix, dir] of sortedDirRoutes) {
       if (pathname.startsWith(prefix)) {
         let relativePath = pathname.substring(prefix.length);
         if (relativePath === "" || relativePath === "/")
