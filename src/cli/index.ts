@@ -69,21 +69,23 @@ Usage: buntron <command> [options]
 Commands:
   init [name]       Create a new Buntron project
   dev               Start development mode with HMR
-  build             Build for production
-  package           Package as distributable
+  build             Production build (dist/ folder)
+  build --exe       Standalone EXE build (release/ folder)
+  package           Alias for build --exe
   setup             Download WebView2 SDK & compile host
   help              Show this help message
   version           Show version
 
-Options:
-  --help, -h        Show help
-  --version, -v     Show version
+Build Options:
+  --exe             Compile into standalone .exe (no Bun needed)
+  --outdir <dir>    Custom output directory
 
 Examples:
-  buntron init my-app       Create new project
-  buntron dev               Start dev server
-  buntron build             Production build
-  buntron package           Create distributable
+  buntron init my-app        Create new project
+  buntron dev                Start dev server with HMR
+  buntron build              Production build (needs Bun to run)
+  buntron build --exe        Standalone EXE (distribute as ZIP)
+  buntron package            Same as build --exe
 `);
 }
 

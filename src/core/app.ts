@@ -271,15 +271,24 @@ export class BuntronApp extends EventEmitter {
   // ---- Private ----
 
   private findBuntronRoot(): string {
-    // Find the buntron package root (where package.json with name "buntron" is)
-    let dir = dirname(new URL(import.meta.url).pathname);
+    // 1) Check BUNTRON_ROOT env var (set by production builds/launchers)
+    if (process.env.BUNTRON_ROOT) {
+      return resolve(process.env.BUNTRON_ROOT);
+    }
 
-    // Handle Windows path
+    // 2) For EXE builds: check if runtime/ folder exists next to the executable
+    const exeDir = dirname(process.execPath);
+    const runtimeHostExe = resolve(exeDir, "runtime", "BuntronHost.exe");
+    if (require("fs").existsSync(runtimeHostExe)) {
+      return exeDir;
+    }
+
+    // 3) Walk up from import.meta.url to find buntron package (dev/node_modules)
+    let dir = dirname(new URL(import.meta.url).pathname);
     if (process.platform === "win32" && dir.startsWith("/")) {
       dir = dir.substring(1);
     }
 
-    // Walk up to find package root
     for (let i = 0; i < 10; i++) {
       try {
         const pkgPath = resolve(dir, "package.json");
@@ -291,7 +300,7 @@ export class BuntronApp extends EventEmitter {
       dir = parent;
     }
 
-    // Fallback: use __dirname equivalent
+    // 4) Fallback
     return resolve(
       dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1")),
       "..",

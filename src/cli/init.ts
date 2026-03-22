@@ -38,6 +38,7 @@ export async function runInit(args: string[]) {
         scripts: {
           dev: "buntron dev",
           build: "buntron build",
+          "build:exe": "buntron build --exe",
           package: "buntron package",
         },
         dependencies: {

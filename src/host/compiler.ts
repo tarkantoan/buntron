@@ -250,14 +250,22 @@ function getHostExePath(buntronRoot: string): string {
 
 /**
  * Ensure host is compiled (compile if needed)
+ * Supports both development layout (native/build/) and production layout (runtime/)
  */
 async function ensureHost(buntronRoot: string): Promise<string> {
-  const paths = getPaths(buntronRoot);
+  // 1) Check production layout: <root>/runtime/BuntronHost.exe
+  const prodHostExe = join(buntronRoot, "runtime", "BuntronHost.exe");
+  if (existsSync(prodHostExe)) {
+    return prodHostExe;
+  }
 
+  // 2) Check standard layout: <root>/native/build/BuntronHost.exe
+  const paths = getPaths(buntronRoot);
   if (isHostReady(buntronRoot)) {
     return paths.hostExe;
   }
 
+  // 3) Try to compile
   const success = await compileHost(buntronRoot);
   if (!success) {
     throw new Error("[Buntron] Failed to build host application");
