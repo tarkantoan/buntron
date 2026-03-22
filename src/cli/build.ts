@@ -33,7 +33,9 @@ export async function runBuild(args: string[]) {
   const defaultOutDir = isExe ? "release" : "dist";
   const outDir = resolve(
     cwd,
-    args.includes("--outdir") ? args[args.indexOf("--outdir") + 1] : defaultOutDir,
+    args.includes("--outdir")
+      ? args[args.indexOf("--outdir") + 1]
+      : defaultOutDir,
   );
 
   // ── Read project info ──────────────────────────────────────
@@ -130,7 +132,12 @@ export async function runBuild(args: string[]) {
   console.log(`  [3/${totalSteps}] Building preload...`);
 
   let preloadBuilt = false;
-  for (const preload of ["src/preload.ts", "src/preload.js", "preload.ts", "preload.js"]) {
+  for (const preload of [
+    "src/preload.ts",
+    "src/preload.js",
+    "preload.ts",
+    "preload.js",
+  ]) {
     const preloadPath = resolve(cwd, preload);
     if (existsSync(preloadPath)) {
       const preloadBuild = await Bun.build({
@@ -191,7 +198,11 @@ export async function runBuild(args: string[]) {
 
     writeFileSync(
       join(outDir, "package.json"),
-      JSON.stringify({ name: appName, version: appVersion, main: "main.js" }, null, 2),
+      JSON.stringify(
+        { name: appName, version: appVersion, main: "main.js" },
+        null,
+        2,
+      ),
     );
 
     console.log(`    ✅ ${appName}.bat`);
@@ -217,7 +228,16 @@ await import("./main.js");
     const exePath = join(outDir, exeName);
 
     const compileProc = Bun.spawnSync(
-      ["bun", "build", "--compile", "--minify", "--target=bun-windows-x64", wrapperPath, "--outfile", exePath],
+      [
+        "bun",
+        "build",
+        "--compile",
+        "--minify",
+        "--target=bun-windows-x64",
+        wrapperPath,
+        "--outfile",
+        exePath,
+      ],
       { cwd: appDir, env: { ...process.env } },
     );
 
@@ -239,7 +259,10 @@ await import("./main.js");
           console.log("    ✅ Patched as GUI application (no console window)");
         }
       } catch (e) {
-        console.warn("    ⚠️  Could not patch PE subsystem:", (e as Error).message);
+        console.warn(
+          "    ⚠️  Could not patch PE subsystem:",
+          (e as Error).message,
+        );
       }
     } else {
       console.log("    ℹ️  Debug mode: console window kept");
@@ -248,10 +271,20 @@ await import("./main.js");
     console.log(`    ✅ ${exeName} compiled`);
 
     // Cleanup temp _build/
-    try { rmSync(appDir, { recursive: true, force: true }); } catch {}
+    try {
+      rmSync(appDir, { recursive: true, force: true });
+    } catch {}
 
     // ── Summary ──────────────────────────────────────────────
-    printExeSummary(outDir, exePath, exeName, runtimeDir, rendererOutDir, defaultOutDir, isDebug);
+    printExeSummary(
+      outDir,
+      exePath,
+      exeName,
+      runtimeDir,
+      rendererOutDir,
+      defaultOutDir,
+      isDebug,
+    );
   } else {
     printDistSummary(outDir, appName, defaultOutDir);
   }
@@ -269,7 +302,14 @@ async function buildViteRenderer(cwd: string, rendererOutDir: string) {
   }
 
   const result = Bun.spawnSync(
-    ["bun", viteEntry, "build", "--outDir", resolve(rendererOutDir), "--emptyOutDir"],
+    [
+      "bun",
+      viteEntry,
+      "build",
+      "--outDir",
+      resolve(rendererOutDir),
+      "--emptyOutDir",
+    ],
     { cwd, stdout: "inherit", stderr: "inherit" },
   );
 
@@ -303,9 +343,13 @@ function buildStaticRenderer(cwd: string, rendererOutDir: string) {
 // ═══════════════════════════════════════════════════════════════
 
 function printExeSummary(
-  outDir: string, exePath: string, exeName: string,
-  runtimeDir: string, rendererOutDir: string,
-  defaultOutDir: string, isDebug: boolean,
+  outDir: string,
+  exePath: string,
+  exeName: string,
+  runtimeDir: string,
+  rendererOutDir: string,
+  defaultOutDir: string,
+  isDebug: boolean,
 ) {
   const exeSize = (statSync(exePath).size / 1024 / 1024).toFixed(1);
 
@@ -328,7 +372,11 @@ function printExeSummary(
 
   const runtimeMB = (runtimeSize / 1024 / 1024).toFixed(1);
   const rendererMB = (rendererSize / 1024 / 1024).toFixed(1);
-  const totalMB = (parseFloat(exeSize) + parseFloat(runtimeMB) + parseFloat(rendererMB)).toFixed(1);
+  const totalMB = (
+    parseFloat(exeSize) +
+    parseFloat(runtimeMB) +
+    parseFloat(rendererMB)
+  ).toFixed(1);
 
   const modeLabel = isDebug ? "Debug EXE" : "EXE";
   console.log(`
@@ -349,7 +397,11 @@ ${isDebug ? "\n  ℹ️  Debug: console window + DevTools enabled" : ""}
 `);
 }
 
-function printDistSummary(outDir: string, appName: string, defaultOutDir: string) {
+function printDistSummary(
+  outDir: string,
+  appName: string,
+  defaultOutDir: string,
+) {
   let totalSize = 0;
   (function walk(dir: string) {
     for (const f of readdirSync(dir)) {

@@ -78,8 +78,11 @@ export async function runInit(args: string[]) {
 
   // ── Success message ────────────────────────────────────────
   const tmplLabel =
-    template === "react" ? "React + Vite" :
-    template === "vue" ? "Vue + Vite" : "Static HTML";
+    template === "react"
+      ? "React + Vite"
+      : template === "vue"
+        ? "Vue + Vite"
+        : "Static HTML";
 
   console.log(`✅ Project created successfully!  [${tmplLabel}]
 
@@ -402,10 +405,7 @@ export default App;
   );
 
   // App.css
-  writeFileSync(
-    join(rendererDir, "App.css"),
-    CSS_THEME,
-  );
+  writeFileSync(join(rendererDir, "App.css"), CSS_THEME);
 
   // TypeScript declaration for window.buntron
   writeFileSync(join(rendererDir, "buntron.d.ts"), BUNTRON_DTS);

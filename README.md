@@ -285,6 +285,7 @@ The preload script exposes `window.buntron` in the renderer once the IPC connect
 Both `window.buntron.ipc` and `window.buntron.ipcRenderer` are available (they are the same object).
 
 > **Tip:** `window.buntron` is only defined after the WebSocket connects. Use the `buntron-ipc-ready` event to wait:
+>
 > ```js
 > if (window.buntron) doStuff();
 > else window.addEventListener("buntron-ipc-ready", doStuff);
@@ -534,11 +535,11 @@ powerMonitor.stop();
 
 Buntron provides 3 build modes for different stages of development:
 
-| Mode | Command | DevTools | Console | Output | Use case |
-|---|---|---|---|---|---|
-| **Dev** | `bun run dev` | ✅ Open | Terminal | — | Development with HMR |
-| **Debug EXE** | `bun run build:debug` | ✅ Open | ✅ Open | `release/` | Test production build |
-| **Production EXE** | `bun run build:exe` | ❌ Closed | ❌ Hidden | `release/` | Ship to users |
+| Mode               | Command               | DevTools  | Console   | Output     | Use case              |
+| ------------------ | --------------------- | --------- | --------- | ---------- | --------------------- |
+| **Dev**            | `bun run dev`         | ✅ Open   | Terminal  | —          | Development with HMR  |
+| **Debug EXE**      | `bun run build:debug` | ✅ Open   | ✅ Open   | `release/` | Test production build |
+| **Production EXE** | `bun run build:exe`   | ❌ Closed | ❌ Hidden | `release/` | Ship to users         |
 
 > `bun run build` creates a `dist/` folder that requires Bun on the target machine (useful for CI/servers).
 
@@ -564,13 +565,14 @@ buntron version                Show version
 
 Scaffolds a new project. Supports three templates:
 
-| Flag       | Template                   | Includes                           |
-| ---------- | -------------------------- | ---------------------------------- |
-| *(none)*   | Static HTML/CSS/JS         | Plain renderer files               |
-| `--react`  | React + Vite + TypeScript  | Vite, React 19, JSX, HMR          |
-| `--vue`    | Vue + Vite + TypeScript    | Vite, Vue 3, SFC support, HMR     |
+| Flag      | Template                  | Includes                      |
+| --------- | ------------------------- | ----------------------------- |
+| _(none)_  | Static HTML/CSS/JS        | Plain renderer files          |
+| `--react` | React + Vite + TypeScript | Vite, React 19, JSX, HMR      |
+| `--vue`   | Vue + Vite + TypeScript   | Vite, Vue 3, SFC support, HMR |
 
 **Static template:**
+
 ```
 my-app/
 ├── src/
@@ -586,6 +588,7 @@ my-app/
 ```
 
 **React / Vue template:**
+
 ```
 my-app/
 ├── src/
@@ -721,7 +724,7 @@ import { resolve } from "path";
 const isDev = process.env.NODE_ENV !== "production";
 const isDebug = process.env.BUNTRON_DEBUG === "1";
 const appRoot = process.env.BUNTRON_ROOT || __dirname;
-const devUrl = process.env.BUNTRON_DEV_URL;       // Set automatically in dev mode
+const devUrl = process.env.BUNTRON_DEV_URL; // Set automatically in dev mode
 const app = new BuntronApp();
 
 async function createWindow() {
@@ -757,12 +760,12 @@ await createWindow();
 
 **Key environment variables:**
 
-| Variable          | Set by          | Purpose                                     |
-| ----------------- | --------------- | ------------------------------------------- |
+| Variable          | Set by          | Purpose                                            |
+| ----------------- | --------------- | -------------------------------------------------- |
 | `BUNTRON_DEV_URL` | `buntron dev`   | Vite dev server URL (e.g. `http://localhost:5173`) |
-| `BUNTRON_ROOT`    | `buntron build` | Root path for resolving files in production |
-| `BUNTRON_DEBUG`   | `--debug` flag  | Enables DevTools in production EXE          |
-| `NODE_ENV`        | build commands  | `"production"` in builds                    |
+| `BUNTRON_ROOT`    | `buntron build` | Root path for resolving files in production        |
+| `BUNTRON_DEBUG`   | `--debug` flag  | Enables DevTools in production EXE                 |
+| `NODE_ENV`        | build commands  | `"production"` in builds                           |
 
 ---
 

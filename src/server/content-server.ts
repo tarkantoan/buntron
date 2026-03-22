@@ -183,7 +183,9 @@ export class ContentServer {
     }
 
     // Directory routes (sort by prefix length descending so more specific routes match first)
-    const sortedDirRoutes = [...this.dirRoutes.entries()].sort((a, b) => b[0].length - a[0].length);
+    const sortedDirRoutes = [...this.dirRoutes.entries()].sort(
+      (a, b) => b[0].length - a[0].length,
+    );
     for (const [prefix, dir] of sortedDirRoutes) {
       if (pathname.startsWith(prefix)) {
         let relativePath = pathname.substring(prefix.length);

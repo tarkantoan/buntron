@@ -24,7 +24,9 @@ export async function runDev(args: string[]) {
 
   if (!mainFile) {
     console.error("Error: Could not find main entry file.");
-    console.error("Specify it in package.json 'main' or pass as argument: buntron dev src/main.ts");
+    console.error(
+      "Specify it in package.json 'main' or pass as argument: buntron dev src/main.ts",
+    );
     process.exit(1);
   }
 
@@ -57,13 +59,21 @@ export async function runDev(args: string[]) {
   // ── Setup cleanup ────────────────────────────────────────
   const cleanup = () => {
     if (devServerProc) {
-      try { devServerProc.kill(); } catch {}
+      try {
+        devServerProc.kill();
+      } catch {}
       devServerProc = null;
     }
   };
   process.on("exit", cleanup);
-  process.on("SIGINT", () => { cleanup(); process.exit(); });
-  process.on("SIGTERM", () => { cleanup(); process.exit(); });
+  process.on("SIGINT", () => {
+    cleanup();
+    process.exit();
+  });
+  process.on("SIGTERM", () => {
+    cleanup();
+    process.exit();
+  });
 
   // ── Watch for main process changes ───────────────────────
   setupWatcher(cwd, fw);
@@ -80,7 +90,10 @@ export async function runDev(args: string[]) {
 
 // ── Vite Dev Server ──────────────────────────────────────────
 
-async function startViteDevServer(cwd: string, fw: FrameworkInfo): Promise<string> {
+async function startViteDevServer(
+  cwd: string,
+  fw: FrameworkInfo,
+): Promise<string> {
   const viteEntry = resolve(cwd, "node_modules", "vite", "bin", "vite.js");
   if (!existsSync(viteEntry)) {
     console.error("  Error: vite not found in node_modules. Run: bun install");
@@ -126,7 +139,17 @@ function setupWatcher(cwd: string, fw: FrameworkInfo) {
   const srcDir = join(cwd, "src");
   if (!existsSync(srcDir)) return;
 
-  const rendererExts = new Set([".html", ".css", ".js", ".jsx", ".tsx", ".vue", ".svg", ".png", ".jpg"]);
+  const rendererExts = new Set([
+    ".html",
+    ".css",
+    ".js",
+    ".jsx",
+    ".tsx",
+    ".vue",
+    ".svg",
+    ".png",
+    ".jpg",
+  ]);
 
   watch(srcDir, { recursive: true }, (_eventType, filename) => {
     if (!filename) return;
@@ -136,7 +159,9 @@ function setupWatcher(cwd: string, fw: FrameworkInfo) {
 
     const ext = extname(filename).toLowerCase();
     if (ext === ".ts" || ext === ".tsx") {
-      console.log(`\n  [DEV] ${filename} changed — restart the app (Ctrl+C → bun run dev)\n`);
+      console.log(
+        `\n  [DEV] ${filename} changed — restart the app (Ctrl+C → bun run dev)\n`,
+      );
     }
   });
 }
@@ -157,7 +182,13 @@ function findMainFile(cwd: string, explicit?: string): string | null {
     }
   } catch {}
 
-  for (const f of ["src/main.ts", "src/main.js", "src/index.ts", "main.ts", "index.ts"]) {
+  for (const f of [
+    "src/main.ts",
+    "src/main.js",
+    "src/index.ts",
+    "main.ts",
+    "index.ts",
+  ]) {
     const p = resolve(cwd, f);
     if (existsSync(p)) return p;
   }
