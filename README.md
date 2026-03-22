@@ -39,10 +39,11 @@ and a familiar Electron-style API.
 
 - 🚀 **Bun-powered** — 3-5x faster startup than Node.js
 - 🌐 **WebView2 rendering** — Edge Chromium engine, always up-to-date
+- ⚛️ **Framework support** — React, Vue, Svelte, Solid, or plain HTML/CSS/JS
 - 🪟 **Native Win32 FFI** — Direct bindings to user32, kernel32, shell32, gdi32
 - 📡 **IPC system** — WebSocket-based main↔renderer communication
-- 🔥 **HMR** — Hot Module Reload during development
-- 📦 **CLI tooling** — Scaffolding, dev server, build & package commands
+- 🔥 **HMR** — Hot Module Reload via Vite during development
+- 📦 **CLI tooling** — Scaffolding, dev server, 3 build modes (dev/debug/production)
 - 🎨 **Rich API** — Dialogs, tray icons, menus, notifications, clipboard, global shortcuts
 - 🏗️ **Zero npm dependencies** — Only needs Bun, .NET Framework (built-in), and WebView2 Runtime
 
@@ -65,12 +66,14 @@ and a familiar Electron-style API.
 # Install Buntron in your project
 bun add github:tarkantoan/buntron
 
-# Create a new app from template
-bunx buntron init my-app
+# Create a new app (pick a template)
+bunx buntron init my-app             # Static HTML/CSS/JS
+bunx buntron init my-app --react      # React + Vite + TypeScript
+bunx buntron init my-app --vue        # Vue + Vite + TypeScript
 cd my-app
 bun install
 
-# Start development with HMR
+# Start development (with Vite HMR for React/Vue)
 bun run dev
 
 # Build for production (dist/ folder, requires Bun to run)
@@ -78,6 +81,9 @@ bun run build
 
 # Build standalone EXE (release/ folder, no Bun needed)
 bun run build:exe
+
+# Build debug EXE (with console window + DevTools)
+bun run build:debug
 ```
 
 ---
@@ -520,20 +526,30 @@ powerMonitor.stop();
 ## CLI Commands
 
 ```
-buntron init [name]     Create a new Buntron project (use "." for current dir)
-buntron dev             Start development with HMR
-buntron build           Production build → dist/ (requires Bun to run)
-buntron build --exe     Standalone EXE build → release/ (no Bun needed)
-buntron package         Alias for build --exe
-buntron setup           Run setup / install WebView2 SDK
-buntron help            Show help
-buntron version         Show version
+buntron init [name]            Create a new project (static HTML template)
+buntron init [name] --react    Create with React + Vite + TypeScript
+buntron init [name] --vue      Create with Vue + Vite + TypeScript
+buntron dev                    Start development (with Vite HMR for frameworks)
+buntron build                  Production build → dist/ (requires Bun to run)
+buntron build --exe            Standalone EXE build → release/ (no Bun needed)
+buntron build --exe --debug    Debug EXE build → release/ (console + DevTools)
+buntron package                Alias for build --exe
+buntron setup                  Run setup / install WebView2 SDK
+buntron help                   Show help
+buntron version                Show version
 ```
 
 ### `buntron init [name]`
 
-Scaffolds a new project with:
+Scaffolds a new project. Supports three templates:
 
+| Flag       | Template                   | Includes                           |
+| ---------- | -------------------------- | ---------------------------------- |
+| *(none)*   | Static HTML/CSS/JS         | Plain renderer files               |
+| `--react`  | React + Vite + TypeScript  | Vite, React 19, JSX, HMR          |
+| `--vue`    | Vue + Vite + TypeScript    | Vite, Vue 3, SFC support, HMR     |
+
+**Static template:**
 ```
 my-app/
 ├── src/
@@ -543,7 +559,25 @@ my-app/
 │       ├── index.html    # UI entry point
 │       ├── styles.css    # Styles
 │       └── renderer.js   # Renderer script
-├── assets/               # App resources (icons, images)
+├── assets/
+├── package.json
+└── tsconfig.json
+```
+
+**React / Vue template:**
+```
+my-app/
+├── src/
+│   ├── main.ts           # Main process entry
+│   ├── preload.ts        # Preload script
+│   ├── buntron.d.ts      # Type definitions
+│   └── renderer/
+│       ├── index.html
+│       ├── index.css
+│       ├── App.tsx / App.vue
+│       └── main.tsx / main.ts
+├── assets/
+├── vite.config.ts
 ├── package.json
 └── tsconfig.json
 ```
@@ -552,10 +586,10 @@ Use `buntron init .` to scaffold in the current directory.
 
 ### `buntron dev`
 
-Starts the app in development mode (`NODE_ENV` is not set to `production`):
+Starts the app in development mode:
 
-- Watches for file changes
-- Hot-reloads renderer files (HTML, CSS, JS) instantly
+- **Framework projects (React/Vue):** Starts Vite dev server with HMR, loads `http://localhost:5173` in WebView2
+- **Static projects:** Serves files directly with file watcher
 - Auto-restarts main process on TypeScript changes
 - DevTools enabled (if `devTools: isDev` pattern is used)
 
@@ -563,40 +597,52 @@ Starts the app in development mode (`NODE_ENV` is not set to `production`):
 
 Builds the app for production into `dist/`:
 
-- Bundles & minifies main process with `Bun.build()`
-- Copies renderer files (src/renderer, public, assets)
-- Builds preload script for browser target
+- **Framework projects:** Runs Vite build for renderer → `dist/renderer/`
+- **Static projects:** Copies renderer files → `dist/renderer/`
+- Bundles main process with `Bun.build()`
+- Builds preload script
 - Copies Buntron runtime (BuntronHost.exe + DLLs)
-- Creates `.bat` and `.ps1` launchers (sets `NODE_ENV=production`)
+- Creates `.bat` and `.ps1` launchers
 - Requires Bun installed on the target machine to run
 
 ```
 dist/
 ├── main.js              # Bundled main process
-├── src/renderer/        # Renderer files
+├── preload.js           # Preload script
+├── renderer/            # Built renderer files
 ├── runtime/             # BuntronHost.exe + DLLs
+├── assets/
 ├── myapp.bat            # Windows launcher
-├── myapp.ps1            # PowerShell launcher
-└── package.json
+└── myapp.ps1            # PowerShell launcher
 ```
 
 ### `buntron build --exe`
 
-Builds a standalone EXE into `release/` — no Bun needed on target:
+Builds a standalone production EXE into `release/`:
 
 - Everything from `buntron build`, plus:
 - Compiles into a single `.exe` with `bun build --compile`
 - Patches PE header to GUI subsystem (no console window)
 - Sets `BUNTRON_ROOT` and `NODE_ENV=production` automatically
-- DevTools disabled, production optimized
+- DevTools disabled
 
 ```
 release/
 ├── myapp.exe            # Standalone EXE (~110 MB, includes Bun runtime)
-└── runtime/             # BuntronHost.exe + DLLs (~0.8 MB)
+├── renderer/            # Built renderer (React/Vue/static)
+├── runtime/             # BuntronHost.exe + DLLs (~0.8 MB)
+└── assets/
 ```
 
-Distribute: ZIP the `release/` folder. Target machine needs WebView2 Runtime (pre-installed on Win10/11).
+Distribute: ZIP the `release/` folder. Target needs WebView2 Runtime (pre-installed on Win10/11).
+
+### `buntron build --exe --debug`
+
+Builds a debug EXE into `release/`:
+
+- Same as `--exe` but **keeps console window** (no PE GUI patch)
+- Enables **DevTools** (`BUNTRON_DEBUG=1`)
+- Useful for debugging production builds
 
 ### `buntron package`
 
@@ -606,30 +652,55 @@ Alias for `buntron build --exe`.
 
 ## Project Structure
 
-A typical Buntron project (generated by `bunx buntron init`):
+Buntron supports both static and framework-based projects.
+
+### Static project (default)
 
 ```
 my-app/
 ├── src/
 │   ├── main.ts              # Main process (Bun)
-│   ├── preload.ts           # Preload script (optional)
+│   ├── preload.ts           # Preload script
 │   └── renderer/
 │       ├── index.html       # HTML entry
 │       ├── styles.css       # CSS
 │       └── renderer.js      # Client-side JS
-├── assets/                  # App resources (icons, images)
+├── assets/
 ├── package.json
-├── tsconfig.json
-└── .gitignore
+└── tsconfig.json
+```
+
+### React / Vue project
+
+```
+my-app/
+├── src/
+│   ├── main.ts              # Main process (Bun)
+│   ├── preload.ts           # Preload script
+│   ├── buntron.d.ts         # Buntron type definitions
+│   └── renderer/
+│       ├── index.html       # HTML entry
+│       ├── index.css        # CSS
+│       ├── App.tsx / App.vue # Root component
+│       └── main.tsx / main.ts
+├── assets/
+├── vite.config.ts
+├── package.json
+└── tsconfig.json
 ```
 
 ### Main Process (`src/main.ts`)
+
+The main process template works for all project types (static, React, Vue):
 
 ```ts
 import { BuntronApp, BrowserWindow, ipcMain } from "buntron";
 import { resolve } from "path";
 
 const isDev = process.env.NODE_ENV !== "production";
+const isDebug = process.env.BUNTRON_DEBUG === "1";
+const appRoot = process.env.BUNTRON_ROOT || __dirname;
+const devUrl = process.env.BUNTRON_DEV_URL;       // Set automatically in dev mode
 const app = new BuntronApp();
 
 async function createWindow() {
@@ -638,14 +709,19 @@ async function createWindow() {
     height: 800,
     title: "My App",
     webPreferences: {
-      preload: resolve(__dirname, "preload.ts"),
-      devTools: isDev,
+      preload: resolve(appRoot, isDev ? "preload.ts" : "preload.js"),
+      devTools: isDev || isDebug,
     },
   });
 
-  await win.loadFile(resolve(__dirname, "renderer", "index.html"));
+  // Dev mode: load from Vite dev server | Production: load built files
+  if (devUrl) {
+    await win.loadURL(devUrl);
+  } else {
+    await win.loadFile(resolve(appRoot, "renderer", "index.html"));
+  }
 
-  if (isDev) win.webContents.openDevTools();
+  if (isDev || isDebug) win.webContents.openDevTools();
 
   ipcMain.handle("greet", async (_event, name) => {
     return `Hello, ${name}!`;
@@ -658,28 +734,14 @@ await app.start();
 await createWindow();
 ```
 
-### Renderer (`renderer/index.html`)
+**Key environment variables:**
 
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>My App</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <h1>Hello Buntron!</h1>
-    <button id="greetBtn">Greet</button>
-    <p id="result"></p>
-    <script>
-      document.getElementById("greetBtn").onclick = async () => {
-        const msg = await window.buntron.ipc.invoke("greet", "World");
-        document.getElementById("result").textContent = msg;
-      };
-    </script>
-  </body>
-</html>
-```
+| Variable          | Set by          | Purpose                                     |
+| ----------------- | --------------- | ------------------------------------------- |
+| `BUNTRON_DEV_URL` | `buntron dev`   | Vite dev server URL (e.g. `http://localhost:5173`) |
+| `BUNTRON_ROOT`    | `buntron build` | Root path for resolving files in production |
+| `BUNTRON_DEBUG`   | `--debug` flag  | Enables DevTools in production EXE          |
+| `NODE_ENV`        | build commands  | `"production"` in builds                    |
 
 ---
 
@@ -797,7 +859,8 @@ buntron/
 │   │   ├── init.ts
 │   │   ├── dev.ts
 │   │   ├── build.ts
-│   │   └── package-cmd.ts
+│   │   ├── package-cmd.ts
+│   │   └── framework.ts   # Framework auto-detection
 │   └── index.ts         # Main exports
 ├── bin/
 │   └── buntron.ts       # CLI entry point
