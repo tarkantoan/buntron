@@ -91,46 +91,33 @@ async function startViteDevServer(cwd: string, fw: FrameworkInfo): Promise<strin
 
   const proc = Bun.spawn(["bun", viteEntry, "--port", String(fw.devPort)], {
     cwd,
-    stdout: "pipe",
+    stdout: "inherit",
     stderr: "inherit",
   });
 
   devServerProc = proc;
 
-  return new Promise<string>((resolveUrl, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error("Vite dev server did not start within 30 seconds"));
-    }, 30000);
+  // Poll for Vite to be ready (check ports 5173..5183)
+  const startTime = Date.now();
+  const maxWait = 30000;
+  const ports = Array.from({ length: 10 }, (_, i) => fw.devPort + i);
 
-    let output = "";
-    let resolved = false;
-
-    const reader = proc.stdout.getReader();
-
-    function pump() {
-      reader.read().then(({ done, value }) => {
-        if (done) {
-          if (!resolved) reject(new Error("Vite dev server exited unexpectedly"));
-          return;
+  while (Date.now() - startTime < maxWait) {
+    await Bun.sleep(300);
+    for (const port of ports) {
+      try {
+        const resp = await fetch(`http://localhost:${port}`, {
+          signal: AbortSignal.timeout(500),
+        });
+        if (resp.status < 500) {
+          return `http://localhost:${port}`;
         }
-        const text = new TextDecoder().decode(value);
-        output += text;
-        process.stdout.write(text);
-
-        if (!resolved) {
-          // Vite outputs "Local:   http://localhost:5173/"
-          const match = output.match(/Local:\s+(https?:\/\/localhost:\d+)/);
-          if (match) {
-            resolved = true;
-            clearTimeout(timeout);
-            resolveUrl(match[1]);
-          }
-        }
-        pump();
-      });
+      } catch {}
     }
-    pump();
-  });
+  }
+
+  console.error("  Error: Vite dev server did not start within 30 seconds");
+  process.exit(1);
 }
 
 // ── File Watcher ─────────────────────────────────────────────
