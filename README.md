@@ -281,7 +281,14 @@ ipcMain.removeHandler("get-data");
 
 ### Renderer API (`window.buntron`)
 
-The preload script exposes `window.buntron` in the renderer:
+The preload script exposes `window.buntron` in the renderer once the IPC connection is ready.
+Both `window.buntron.ipc` and `window.buntron.ipcRenderer` are available (they are the same object).
+
+> **Tip:** `window.buntron` is only defined after the WebSocket connects. Use the `buntron-ipc-ready` event to wait:
+> ```js
+> if (window.buntron) doStuff();
+> else window.addEventListener("buntron-ipc-ready", doStuff);
+> ```
 
 ```js
 // Invoke a handler in main process (returns promise)
@@ -520,6 +527,20 @@ const state = powerMonitor.getSystemPowerState();
 
 powerMonitor.stop();
 ```
+
+---
+
+## Build Modes
+
+Buntron provides 3 build modes for different stages of development:
+
+| Mode | Command | DevTools | Console | Output | Use case |
+|---|---|---|---|---|---|
+| **Dev** | `bun run dev` | ✅ Open | Terminal | — | Development with HMR |
+| **Debug EXE** | `bun run build:debug` | ✅ Open | ✅ Open | `release/` | Test production build |
+| **Production EXE** | `bun run build:exe` | ❌ Closed | ❌ Hidden | `release/` | Ship to users |
+
+> `bun run build` creates a `dist/` folder that requires Bun on the target machine (useful for CI/servers).
 
 ---
 
