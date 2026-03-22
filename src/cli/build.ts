@@ -262,7 +262,10 @@ await import("./main.js");
         console.log("    ✅ Patched as GUI application (no console window)");
       }
     } catch (e) {
-      console.warn("    ⚠️  Could not patch PE subsystem:", (e as Error).message);
+      console.warn(
+        "    ⚠️  Could not patch PE subsystem:",
+        (e as Error).message,
+      );
     }
 
     console.log(`    ✅ ${exeName} compiled`);

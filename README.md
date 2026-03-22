@@ -586,6 +586,7 @@ Builds a standalone EXE into `release/` — no Bun needed on target:
 
 - Everything from `buntron build`, plus:
 - Compiles into a single `.exe` with `bun build --compile`
+- Patches PE header to GUI subsystem (no console window)
 - Sets `BUNTRON_ROOT` and `NODE_ENV=production` automatically
 - DevTools disabled, production optimized
 
