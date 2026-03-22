@@ -489,6 +489,7 @@ export class BrowserWindow extends EventEmitter {
   if (typeof window !== 'undefined') {
     Object.defineProperty(window, 'buntron', {
       value: Object.freeze({
+        ipc: Object.freeze(ipcRenderer),
         ipcRenderer: Object.freeze(ipcRenderer),
         windowId: BUNTRON_WINDOW_ID,
         platform: 'win32'
