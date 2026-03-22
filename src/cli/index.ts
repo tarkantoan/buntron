@@ -67,25 +67,34 @@ function printHelp() {
 Usage: buntron <command> [options]
 
 Commands:
-  init [name]       Create a new Buntron project
-  dev               Start development mode with HMR
-  build             Production build (dist/ folder)
-  build --exe       Standalone EXE build (release/ folder)
-  package           Alias for build --exe
-  setup             Download WebView2 SDK & compile host
-  help              Show this help message
-  version           Show version
+  init [name]         Create a new Buntron project
+  dev                 Start development mode with HMR
+  build               Production build → dist/
+  build --exe         Standalone EXE → release/
+  build --exe --debug Debug EXE (console + DevTools)
+  package             Alias for build --exe
+  setup               Download WebView2 SDK & compile host
+  help                Show this help message
+  version             Show version
+
+Init Templates:
+  --react             Vite + React + TypeScript
+  --vue               Vite + Vue + TypeScript
+  (default)           Static HTML/CSS/JS
 
 Build Options:
-  --exe             Compile into standalone .exe (no Bun needed)
-  --outdir <dir>    Custom output directory
+  --exe               Compile into standalone .exe
+  --debug             Keep console window + enable DevTools (EXE only)
+  --outdir <dir>      Custom output directory
 
 Examples:
-  buntron init my-app        Create new project
-  buntron dev                Start dev server with HMR
-  buntron build              Production build (needs Bun to run)
-  buntron build --exe        Standalone EXE (distribute as ZIP)
-  buntron package            Same as build --exe
+  buntron init my-app            Static HTML project
+  buntron init my-app --react    React + Vite project
+  buntron init my-app --vue      Vue + Vite project
+  buntron dev                    Start dev server
+  buntron build                  Production build
+  buntron build --exe            Standalone EXE
+  buntron build --exe --debug    Debug EXE with console
 `);
 }
 
