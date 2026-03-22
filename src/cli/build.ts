@@ -165,14 +165,14 @@ export async function runBuild(args: string[]) {
   } else {
     // Standard build: create .bat + .ps1 launchers
     const batContent = `@echo off
-set BUNTRON_ROOT=%~dp0runtime
+set BUNTRON_ROOT=%~dp0
 set NODE_ENV=production
 cd /d "%~dp0"
 bun run main.js
 `;
     writeFileSync(join(outDir, `${appName}.bat`), batContent);
 
-    const ps1Content = `$env:BUNTRON_ROOT = Join-Path $PSScriptRoot "runtime"
+    const ps1Content = `$env:BUNTRON_ROOT = $PSScriptRoot
 $env:NODE_ENV = "production"
 Set-Location $PSScriptRoot
 bun run main.js
@@ -197,11 +197,11 @@ bun run main.js
 
     // Generate a wrapper that sets BUNTRON_ROOT before running the app
     const wrapperSource = `
-import { dirname, join } from "path";
+import { dirname } from "path";
 
-// Set runtime path relative to exe location
+// Set runtime path relative to exe location (exeDir has runtime/ subfolder)
 const exeDir = dirname(process.execPath);
-process.env.BUNTRON_ROOT = join(exeDir, "runtime");
+process.env.BUNTRON_ROOT = exeDir;
 process.env.NODE_ENV = "production";
 
 // Import the bundled app
