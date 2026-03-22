@@ -316,8 +316,3 @@ function findBuntronRoot(): string | null {
 
   return null;
 }
-
-To run:
-  cd ${outDir} && bun start.ts
-`);
-}
