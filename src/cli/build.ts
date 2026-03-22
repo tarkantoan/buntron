@@ -245,6 +245,26 @@ await import("./main.js");
       console.error(compileProc.stderr.toString());
       process.exit(1);
     }
+
+    // Patch PE header: change subsystem from CONSOLE (3) to WINDOWS_GUI (2)
+    // so no console window appears when running the EXE
+    try {
+      const peBuffer = readFileSync(exePath);
+      // e_lfanew at offset 0x3C points to PE signature
+      const peOffset = peBuffer.readUInt32LE(0x3c);
+      // Subsystem is at PE + 4 (COFF hdr) + 20 (COFF size) + 68 (optional hdr offset)
+      const subsystemOffset = peOffset + 4 + 20 + 68;
+      const currentSubsystem = peBuffer.readUInt16LE(subsystemOffset);
+      if (currentSubsystem === 3) {
+        // IMAGE_SUBSYSTEM_WINDOWS_CUI → IMAGE_SUBSYSTEM_WINDOWS_GUI
+        peBuffer.writeUInt16LE(2, subsystemOffset);
+        writeFileSync(exePath, peBuffer);
+        console.log("    ✅ Patched as GUI application (no console window)");
+      }
+    } catch (e) {
+      console.warn("    ⚠️  Could not patch PE subsystem:", (e as Error).message);
+    }
+
     console.log(`    ✅ ${exeName} compiled`);
 
     // Cleanup temp build dir
