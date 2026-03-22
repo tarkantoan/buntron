@@ -63,7 +63,7 @@ and a familiar Electron-style API.
 
 ```bash
 # Install Buntron in your project
-bun add buntron
+bun add github:tarkantoan/buntron
 
 # Create a new app from template
 bunx buntron init my-app
@@ -73,11 +73,11 @@ bun install
 # Start development with HMR
 bun run dev
 
-# Build for production
+# Build for production (dist/ folder, requires Bun to run)
 bun run build
 
-# Package for distribution
-bun run package
+# Build standalone EXE (release/ folder, no Bun needed)
+bun run build:exe
 ```
 
 ---
@@ -170,7 +170,7 @@ const win = new BrowserWindow({
   minWidth: 400,
   minHeight: 300,
   webPreferences: {
-    devTools: true,
+    devTools: process.env.NODE_ENV !== "production",
   },
 });
 
@@ -520,59 +520,86 @@ powerMonitor.stop();
 ## CLI Commands
 
 ```
-buntron init <name>     Create a new Buntron project
+buntron init [name]     Create a new Buntron project (use "." for current dir)
 buntron dev             Start development with HMR
-buntron build           Build for production
-buntron package         Package into distributable folder
+buntron build           Production build → dist/ (requires Bun to run)
+buntron build --exe     Standalone EXE build → release/ (no Bun needed)
+buntron package         Alias for build --exe
 buntron setup           Run setup / install WebView2 SDK
 buntron help            Show help
 buntron version         Show version
 ```
 
-### `buntron init <name>`
+### `buntron init [name]`
 
 Scaffolds a new project with:
 
 ```
 my-app/
 ├── src/
-│   └── main.ts          # Main process entry
-├── renderer/
-│   ├── index.html        # UI entry point
-│   ├── styles.css        # Styles
-│   └── renderer.js       # Renderer script
-├── preload.ts            # Preload script
+│   ├── main.ts           # Main process entry
+│   ├── preload.ts        # Preload script
+│   └── renderer/
+│       ├── index.html    # UI entry point
+│       ├── styles.css    # Styles
+│       └── renderer.js   # Renderer script
+├── assets/               # App resources (icons, images)
 ├── package.json
 └── tsconfig.json
 ```
 
+Use `buntron init .` to scaffold in the current directory.
+
 ### `buntron dev`
 
-Starts the app in development mode:
+Starts the app in development mode (`NODE_ENV` is not set to `production`):
 
 - Watches for file changes
 - Hot-reloads renderer files (HTML, CSS, JS) instantly
 - Auto-restarts main process on TypeScript changes
-- Opens DevTools if configured
+- DevTools enabled (if `devTools: isDev` pattern is used)
 
 ### `buntron build`
 
-Builds the app for production:
+Builds the app for production into `dist/`:
 
-- Bundles main process with Bun
-- Minifies and optimizes
-- Copies renderer files
-- Generates launcher script
+- Bundles & minifies main process with `Bun.build()`
+- Copies renderer files (src/renderer, public, assets)
+- Builds preload script for browser target
+- Copies Buntron runtime (BuntronHost.exe + DLLs)
+- Creates `.bat` and `.ps1` launchers (sets `NODE_ENV=production`)
+- Requires Bun installed on the target machine to run
+
+```
+dist/
+├── main.js              # Bundled main process
+├── src/renderer/        # Renderer files
+├── runtime/             # BuntronHost.exe + DLLs
+├── myapp.bat            # Windows launcher
+├── myapp.ps1            # PowerShell launcher
+└── package.json
+```
+
+### `buntron build --exe`
+
+Builds a standalone EXE into `release/` — no Bun needed on target:
+
+- Everything from `buntron build`, plus:
+- Compiles into a single `.exe` with `bun build --compile`
+- Sets `BUNTRON_ROOT` and `NODE_ENV=production` automatically
+- DevTools disabled, production optimized
+
+```
+release/
+├── myapp.exe            # Standalone EXE (~110 MB, includes Bun runtime)
+└── runtime/             # BuntronHost.exe + DLLs (~0.8 MB)
+```
+
+Distribute: ZIP the `release/` folder. Target machine needs WebView2 Runtime (pre-installed on Win10/11).
 
 ### `buntron package`
 
-Creates a distributable folder:
-
-- Includes Bun runtime
-- Bundles all app files
-- Copies WebView2 host and DLLs
-- Creates `.bat` and `.ps1` launchers
-- Ready to distribute as a ZIP or installer input
+Alias for `buntron build --exe`.
 
 ---
 
@@ -599,26 +626,35 @@ my-app/
 
 ```ts
 import { BuntronApp, BrowserWindow, ipcMain } from "buntron";
+import { resolve } from "path";
 
+const isDev = process.env.NODE_ENV !== "production";
 const app = new BuntronApp();
 
-app.on("ready", async () => {
+async function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
     title: "My App",
+    webPreferences: {
+      preload: resolve(__dirname, "preload.ts"),
+      devTools: isDev,
+    },
   });
 
-  await win.loadFile("./renderer/index.html");
+  await win.loadFile(resolve(__dirname, "renderer", "index.html"));
+
+  if (isDev) win.webContents.openDevTools();
 
   ipcMain.handle("greet", async (_event, name) => {
     return `Hello, ${name}!`;
   });
-});
+}
 
 app.on("window-all-closed", () => app.quit());
 
 await app.start();
+await createWindow();
 ```
 
 ### Renderer (`renderer/index.html`)

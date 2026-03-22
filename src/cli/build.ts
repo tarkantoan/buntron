@@ -26,7 +26,9 @@ export async function runBuild(args: string[]) {
   const defaultOutDir = isExe ? "release" : "dist";
   const outDir = resolve(
     cwd,
-    args.includes("--outdir") ? args[args.indexOf("--outdir") + 1] : defaultOutDir,
+    args.includes("--outdir")
+      ? args[args.indexOf("--outdir") + 1]
+      : defaultOutDir,
   );
 
   // Read project info
@@ -118,7 +120,12 @@ export async function runBuild(args: string[]) {
   console.log(`  [3/${totalSteps}] Building preload script...`);
 
   let preloadBuilt = false;
-  for (const preload of ["src/preload.ts", "src/preload.js", "preload.ts", "preload.js"]) {
+  for (const preload of [
+    "src/preload.ts",
+    "src/preload.js",
+    "preload.ts",
+    "preload.js",
+  ]) {
     const preloadPath = resolve(cwd, preload);
     if (existsSync(preloadPath)) {
       const preloadBuild = await Bun.build({
@@ -185,7 +192,10 @@ bun run main.js
       version: appVersion,
       main: "main.js",
     };
-    writeFileSync(join(outDir, "package.json"), JSON.stringify(distPkg, null, 2));
+    writeFileSync(
+      join(outDir, "package.json"),
+      JSON.stringify(distPkg, null, 2),
+    );
 
     console.log(`    ✅ ${appName}.bat`);
     console.log(`    ✅ ${appName}.ps1`);
@@ -244,7 +254,9 @@ await import("./main.js");
     } catch {}
 
     // Also clean the wrapper
-    try { unlinkSync(wrapperPath); } catch {}
+    try {
+      unlinkSync(wrapperPath);
+    } catch {}
 
     // Print summary
     const exeSize = (statSync(exePath).size / 1024 / 1024).toFixed(1);
@@ -253,7 +265,9 @@ await import("./main.js");
       runtimeSize += statSync(join(runtimeDir, f)).size;
     }
     const runtimeSizeMB = (runtimeSize / 1024 / 1024).toFixed(1);
-    const totalMB = (parseFloat(exeSize) + parseFloat(runtimeSizeMB)).toFixed(1);
+    const totalMB = (parseFloat(exeSize) + parseFloat(runtimeSizeMB)).toFixed(
+      1,
+    );
 
     console.log(`
 ╔══════════════════════════════════════════════════╗
