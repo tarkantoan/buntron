@@ -22,11 +22,11 @@ and a familiar Electron-style API.
 | Feature         | Buntron         | Electron              |
 | --------------- | --------------- | --------------------- |
 | **Runtime**     | Bun             | Node.js               |
-| **Renderer**    | WebView2 (Edge) | Chromium (bundled)     |
-| **Bundle size** | ~5-15 MB        | ~150-200+ MB           |
-| **Startup**     | ~200ms          | ~1-3s                  |
-| **Memory**      | ~30-50 MB       | ~100-300+ MB           |
-| **Platform**    | Windows         | Windows, macOS, Linux  |
+| **Renderer**    | WebView2 (Edge) | Chromium (bundled)    |
+| **Bundle size** | ~5-15 MB        | ~150-200+ MB          |
+| **Startup**     | ~200ms          | ~1-3s                 |
+| **Memory**      | ~30-50 MB       | ~100-300+ MB          |
+| **Platform**    | Windows         | Windows, macOS, Linux |
 
 - **No bundled Chromium** — uses the system WebView2 (pre-installed on Windows 10/11)
 - **Bun runtime** — starts in milliseconds, native TypeScript support
@@ -50,12 +50,12 @@ and a familiar Electron-style API.
 
 ## Requirements
 
-| Requirement          | Details                                                |
-| -------------------- | ------------------------------------------------------ |
-| **OS**               | Windows 10/11                                          |
-| **Bun**              | v1.0+ ([install](https://bun.sh))                      |
-| **.NET Framework**   | 4.x (pre-installed on all modern Windows)              |
-| **WebView2 Runtime** | Included with Windows 10 (1803+) and Windows 11        |
+| Requirement          | Details                                         |
+| -------------------- | ----------------------------------------------- |
+| **OS**               | Windows 10/11                                   |
+| **Bun**              | v1.0+ ([install](https://bun.sh))               |
+| **.NET Framework**   | 4.x (pre-installed on all modern Windows)       |
+| **WebView2 Runtime** | Included with Windows 10 (1803+) and Windows 11 |
 
 ---
 

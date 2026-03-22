@@ -6,12 +6,14 @@ import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { resolve, join, basename } from "path";
 
 export async function runInit(args: string[]) {
-  const projectName = args[0] || "my-buntron-app";
-  const targetDir = resolve(process.cwd(), projectName);
+  const input = args[0] || "my-buntron-app";
+  const initInPlace = input === ".";
+  const targetDir = resolve(process.cwd(), input);
+  const projectName = initInPlace ? basename(process.cwd()) : input;
 
   console.log(`\n🚀 Creating Buntron project: ${projectName}\n`);
 
-  if (existsSync(targetDir)) {
+  if (!initInPlace && existsSync(targetDir)) {
     console.error(`Error: Directory '${projectName}' already exists.`);
     process.exit(1);
   }
@@ -39,7 +41,7 @@ export async function runInit(args: string[]) {
           package: "buntron package",
         },
         dependencies: {
-          buntron: "latest",
+          buntron: "github:tarkantoan/buntron",
         },
       },
       null,
