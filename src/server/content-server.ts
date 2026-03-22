@@ -96,15 +96,15 @@ export class ContentServer {
    */
   serveFile(filePath: string): string {
     const absPath = resolve(filePath);
-    const route = `/f/${this.hashPath(absPath)}/${require("path").basename(absPath)}`;
-    this.fileRoutes.set(route, absPath);
+    const fileName = require("path").basename(absPath);
 
-    // Also serve all files in the same directory (for relative imports)
+    // Serve the entire directory so relative paths (e.g. assets/) resolve correctly
     const dir = dirname(absPath);
     const dirRoute = `/d/${this.hashPath(dir)}`;
     this.dirRoutes.set(dirRoute, dir);
 
-    return `http://127.0.0.1:${this.port}${route}`;
+    // Return URL under the directory route so relative imports work
+    return `http://127.0.0.1:${this.port}${dirRoute}/${fileName}`;
   }
 
   /**

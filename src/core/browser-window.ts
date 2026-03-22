@@ -386,6 +386,7 @@ export class BrowserWindow extends EventEmitter {
     
     _ws.onopen = function() {
       _ready = true;
+      exposeBuntron();
       window.dispatchEvent(new CustomEvent('buntron-ipc-ready'));
     };
     
@@ -485,18 +486,20 @@ export class BrowserWindow extends EventEmitter {
     }
   };
   
-  // Expose to window
-  if (typeof window !== 'undefined') {
-    Object.defineProperty(window, 'buntron', {
-      value: Object.freeze({
-        ipc: Object.freeze(ipcRenderer),
-        ipcRenderer: Object.freeze(ipcRenderer),
-        windowId: BUNTRON_WINDOW_ID,
-        platform: 'win32'
-      }),
-      writable: false,
-      configurable: false
-    });
+  // Expose to window only after WebSocket is connected
+  function exposeBuntron() {
+    if (typeof window !== 'undefined' && !window.buntron) {
+      Object.defineProperty(window, 'buntron', {
+        value: Object.freeze({
+          ipc: Object.freeze(ipcRenderer),
+          ipcRenderer: Object.freeze(ipcRenderer),
+          windowId: BUNTRON_WINDOW_ID,
+          platform: 'win32'
+        }),
+        writable: false,
+        configurable: false
+      });
+    }
   }
   
   connect();
