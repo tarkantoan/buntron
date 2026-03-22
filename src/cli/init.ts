@@ -80,6 +80,7 @@ export async function runInit(args: string[]) {
 import { BuntronApp, BrowserWindow, ipcMain } from "buntron";
 import { resolve } from "path";
 
+const isDev = process.env.NODE_ENV !== "production";
 const app = new BuntronApp();
 
 async function createWindow() {
@@ -89,14 +90,14 @@ async function createWindow() {
     title: "${projectName}",
     webPreferences: {
       preload: resolve(__dirname, "preload.ts"),
-      devTools: true,
+      devTools: isDev,
     },
   });
 
   await win.loadFile(resolve(__dirname, "renderer", "index.html"));
 
   // Open DevTools in development
-  if (process.env.NODE_ENV !== "production") {
+  if (isDev) {
     win.webContents.openDevTools();
   }
 
