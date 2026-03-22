@@ -113,6 +113,10 @@ export async function runBuild(args: string[]) {
     target: "bun",
     minify: true,
     sourcemap: isExe ? "none" : "external",
+    define: {
+      "process.env.NODE_ENV": '"production"',
+      "process.env.BUNTRON_DEBUG": isDebug ? '"1"' : '""',
+    },
   });
 
   if (!buildResult.success) {
